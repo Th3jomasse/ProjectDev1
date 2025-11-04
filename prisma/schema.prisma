@@ -1,0 +1,277 @@
+// Prisma Schema for POS System
+// This is the main database schema file
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// AUTHENTICATION & USERS
+// ============================================
+
+enum UserRole {
+  ADMIN      // Full system access
+  MANAGER    // Location management
+  SERVER     // Waiter/Waitress
+  KITCHEN    // Kitchen staff
+  HOST       // Host/Hostess
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // Hashed with bcrypt
+
+  firstName String
+  lastName  String
+  role      UserRole @default(SERVER)
+
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime? // Soft delete
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+// ============================================
+// ORGANIZATIONS & LOCATIONS (Multi-tenant)
+// ============================================
+
+model Organization {
+  id           String   @id @default(uuid())
+  name         String
+  type         String   // 'single', 'chain', 'franchise'
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  locations    Location[]
+
+  @@map("organizations")
+}
+
+model Location {
+  id             String   @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  name           String
+  code           String?  @unique // Short code like "DT" for Downtown
+
+  addressLine1   String
+  city           String
+  state          String
+  postalCode     String
+  country        String   @default("CA")
+
+  timezone       String   @default("America/Toronto")
+
+  isActive       Boolean  @default(true)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("locations")
+}
+
+// ============================================
+// PRODUCTS & MENU
+// ============================================
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  displayOrder Int     @default(0)
+
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products    Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+
+  name        String
+  description String?
+  sku         String?  @unique
+
+  basePrice   Decimal  @db.Decimal(10, 2)
+  costPrice   Decimal? @db.Decimal(10, 2)
+
+  imageUrl    String?
+
+  isAvailable Boolean  @default(true)
+  isActive    Boolean  @default(true)
+
+  preparationTime Int? // in minutes
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([isAvailable, isActive])
+  @@map("products")
+}
+
+// ============================================
+// TABLES & FLOOR PLAN
+// ============================================
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  DIRTY
+  OUT_OF_SERVICE
+}
+
+model Table {
+  id          String      @id @default(uuid())
+  locationId  String
+
+  tableNumber String
+  displayName String?
+
+  minCapacity Int         @default(1)
+  maxCapacity Int
+
+  status      TableStatus @default(AVAILABLE)
+
+  isActive    Boolean     @default(true)
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([locationId, tableNumber])
+  @@index([locationId, status])
+  @@map("tables")
+}
+
+// ============================================
+// ORDERS
+// ============================================
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  DELIVERED
+  COMPLETED
+  CANCELLED
+}
+
+enum OrderType {
+  DINE_IN
+  TAKEOUT
+  DELIVERY
+  CURBSIDE
+}
+
+model Order {
+  id           String      @id @default(uuid())
+  orderNumber  String      @unique
+
+  locationId   String
+
+  orderType    OrderType
+  status       OrderStatus @default(PENDING)
+
+  tableId      String?
+
+  subtotal     Decimal     @db.Decimal(10, 2)
+  tax          Decimal     @db.Decimal(10, 2)
+  tip          Decimal     @db.Decimal(10, 2) @default(0)
+  total        Decimal     @db.Decimal(10, 2)
+
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  completedAt  DateTime?
+
+  @@index([locationId, status])
+  @@index([orderNumber])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+// ============================================
+// PAYMENTS
+// ============================================
+
+enum PaymentMethod {
+  CASH
+  CARD
+  MOBILE
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  orderId         String
+
+  amount          Decimal       @db.Decimal(10, 2)
+  method          PaymentMethod
+  status          PaymentStatus @default(PENDING)
+
+  processorPaymentId String?    // Stripe payment ID
+
+  createdAt       DateTime      @default(now())
+  completedAt     DateTime?
+
+  @@index([orderId])
+  @@index([status])
+  @@map("payments")
+}
+
+// ============================================
+// CUSTOMER PROFILES
+// ============================================
+
+model Customer {
+  id            String   @id @default(uuid())
+
+  firstName     String?
+  lastName      String?
+  email         String?  @unique
+  phone         String?  @unique
+
+  loyaltyPoints Int      @default(0)
+  totalSpent    Decimal  @db.Decimal(10, 2) @default(0)
+  visitCount    Int      @default(0)
+
+  lastVisitAt   DateTime?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([email])
+  @@index([phone])
+  @@map("customers")
+}
