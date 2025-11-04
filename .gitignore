@@ -49,6 +49,7 @@ Thumbs.db
 # Compiled files
 *.tsbuildinfo
 .nx/cache
+.nx/workspace-data
 
 # Database
 *.db
@@ -64,6 +65,10 @@ docker-compose.override.yml
 tmp/
 temp/
 *.tmp
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
 
 # Python
 __pycache__/
