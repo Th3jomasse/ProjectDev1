@@ -46,10 +46,37 @@ Créer la plateforme POS tout-en-un ultime pour restaurants, combinant :
 - 🤖 Détection d'anomalies
 
 ### Analytics & Reporting
-- Dashboards en temps réel
-- Rapports financiers détaillés
-- Export Excel/PDF
-- Intégration comptabilité (QuickBooks, Xero)
+- 📊 Dashboards en temps réel avec KPIs live
+- 📈 Analytics exploitables de chaque paiement
+- 🎯 Optimisation du menu basée sur données
+- 👥 Suivi comportement et segmentation clients
+- ⭐ Identification des employés performants
+- 📉 Benchmarking vs concurrents
+- 💼 Rapports financiers détaillés
+- 📤 Export Excel/PDF
+- 🔗 Intégration comptabilité (QuickBooks, Xero)
+
+### Multi-Channel Ordering
+- 🌐 Commande en ligne (Web + App mobile)
+- 📱 Commande à la table (QR Code)
+- 🖥️ Bornes self-service (Kiosk)
+- ☎️ Commande téléphonique intégrée
+- 🔄 Synchronisation temps réel tous canaux
+
+### Multi-Location Management
+- 🏢 Gestion centralisée multi-emplacements
+- 🏨 Intégration PMS pour hôtels (Opera, Protel, Mews)
+- 🔌 API partenaire pour intégrations tierces
+- 📊 Dashboards comparatifs entre locations
+- 🎯 Benchmarking et insights réseau
+
+### Réservations & Tables Avancées
+- 📅 Réservations Google/Facebook/Instagram
+- 💳 Gestion no-shows (dépôts, prépaiements)
+- 📱 Liste d'attente numérique avec SMS
+- 🪑 Optimisation intelligente des tables
+- ⏱️ Rotation des tables optimisée
+- 🔔 Confirmations et rappels automatiques
 
 ## 📚 Documentation
 
@@ -57,6 +84,8 @@ Créer la plateforme POS tout-en-un ultime pour restaurants, combinant :
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Architecture technique détaillée, microservices
 - **[ROADMAP.md](./ROADMAP.md)** - Roadmap de développement sprint par sprint
 - **[TECH_STACK.md](./TECH_STACK.md)** - Stack technologique complet
+- **[BUSINESS_FEATURES.md](./BUSINESS_FEATURES.md)** - Fonctionnalités business-critical détaillées
+- **[DATABASE_SCHEMAS.md](./DATABASE_SCHEMAS.md)** - Schémas de base de données complets
 
 ## 🏗️ Architecture
 
