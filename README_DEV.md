@@ -188,8 +188,17 @@ pnpm start:dev
 # Build Auth Service
 pnpm build
 
-# Run tests
+# Run unit tests
 pnpm test
+
+# Run tests in watch mode
+pnpm test:watch
+
+# Run tests with coverage report
+pnpm test:cov
+
+# Run E2E tests (make sure Docker is running)
+pnpm test:e2e
 
 # Lint code
 pnpm lint
@@ -266,12 +275,14 @@ AUTH_SERVICE_PORT=3001
 - ✅ TypeScript strict mode
 - ✅ Prisma ORM integration
 - ✅ PostgreSQL database
+- ✅ Comprehensive unit tests (80%+ coverage target)
+- ✅ Complete E2E test suite for all endpoints
 
 ## 🚧 Next Steps
 
 ### Immediate (Week 1)
 - [ ] Create API Gateway
-- [ ] Add tests to Auth Service
+- [x] Add tests to Auth Service (COMPLETED)
 - [ ] Setup CI/CD pipeline (GitHub Actions)
 
 ### Short term (Week 2-3)

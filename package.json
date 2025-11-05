@@ -55,6 +55,7 @@
     "@nx/workspace": "^17.2.0",
     "@nx/nest": "^17.2.0",
     "@nx/js": "^17.2.0",
+    "@nx/jest": "^17.2.0",
     "@types/node": "^20.10.5",
     "@types/express": "^4.17.21",
     "@types/bcrypt": "^5.0.2",
