@@ -89,19 +89,62 @@ model Location {
 // PRODUCTS & MENU
 // ============================================
 
+enum CategoryType {
+  FOOD
+  BEVERAGE
+  ALCOHOL
+  MERCHANDISE
+}
+
+enum DietaryTag {
+  VEGETARIAN
+  VEGAN
+  GLUTEN_FREE
+  DAIRY_FREE
+  NUT_FREE
+  HALAL
+  KOSHER
+  KETO
+  PALEO
+}
+
+enum SpicyLevel {
+  NONE
+  MILD
+  MEDIUM
+  HOT
+  EXTRA_HOT
+}
+
+enum DrinkStrength {
+  LIGHT      // < 10% ABV
+  MEDIUM     // 10-20% ABV
+  STRONG     // > 20% ABV
+}
+
 model Category {
-  id          String   @id @default(uuid())
+  id          String       @id @default(uuid())
   name        String
   description String?
-  displayOrder Int     @default(0)
+  slug        String?      @unique
+  type        CategoryType @default(FOOD)
 
-  isActive    Boolean  @default(true)
+  parentId    String?
+  parent      Category?    @relation("CategoryChildren", fields: [parentId], references: [id])
+  children    Category[]   @relation("CategoryChildren")
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  displayOrder Int         @default(0)
+  imageUrl    String?
+
+  isActive    Boolean      @default(true)
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   products    Product[]
 
+  @@index([parentId])
+  @@index([type])
   @@map("categories")
 }
 
@@ -113,23 +156,120 @@ model Product {
   name        String
   description String?
   sku         String?  @unique
+  slug        String?  @unique
 
   basePrice   Decimal  @db.Decimal(10, 2)
   costPrice   Decimal? @db.Decimal(10, 2)
 
   imageUrl    String?
 
-  isAvailable Boolean  @default(true)
-  isActive    Boolean  @default(true)
+  // Food-specific attributes
+  preparationTime Int?      // in minutes
+  calories        Int?
+  spicyLevel      SpicyLevel @default(NONE)
 
-  preparationTime Int? // in minutes
+  // Beverage-specific attributes
+  volume          String?   // "16oz", "750ml", etc.
+  abv             Float?    // Alcohol by volume percentage
+  baseSpirit      String?   // "Vodka", "Gin", "Bourbon", etc.
+  drinkStrength   DrinkStrength?
+
+  // Availability
+  isAvailable     Boolean  @default(true)
+  isActive        Boolean  @default(true)
+  availableAllDay Boolean  @default(true)
+  availableFrom   DateTime? // Time of day (hour:minute)
+  availableTo     DateTime? // Time of day (hour:minute)
+
+  // Relationships
+  allergens       ProductAllergen[]
+  dietaryTags     ProductDietaryTag[]
+  modifiers       ProductModifier[]
+  orderItems      OrderItem[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([categoryId])
   @@index([isAvailable, isActive])
+  @@index([slug])
   @@map("products")
+}
+
+model Allergen {
+  id          String            @id @default(uuid())
+  name        String            @unique // "Dairy", "Gluten", "Shellfish", etc.
+  description String?
+  icon        String?           // Icon name or URL
+
+  products    ProductAllergen[]
+
+  createdAt   DateTime          @default(now())
+
+  @@map("allergens")
+}
+
+model ProductAllergen {
+  id         String   @id @default(uuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  allergenId String
+  allergen   Allergen @relation(fields: [allergenId], references: [id])
+
+  createdAt  DateTime @default(now())
+
+  @@unique([productId, allergenId])
+  @@index([productId])
+  @@index([allergenId])
+  @@map("product_allergens")
+}
+
+model ProductDietaryTag {
+  id         String      @id @default(uuid())
+  productId  String
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  tag        DietaryTag
+
+  createdAt  DateTime    @default(now())
+
+  @@unique([productId, tag])
+  @@index([productId])
+  @@map("product_dietary_tags")
+}
+
+model Modifier {
+  id           String            @id @default(uuid())
+  name         String            // "Add Grilled Chicken", "Extra Cheese", etc.
+  description  String?
+  price        Decimal           @db.Decimal(10, 2) @default(0)
+
+  type         String            @default("addon") // "addon", "substitution", "side"
+
+  isActive     Boolean           @default(true)
+
+  products     ProductModifier[]
+
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@map("modifiers")
+}
+
+model ProductModifier {
+  id         String   @id @default(uuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  modifierId String
+  modifier   Modifier @relation(fields: [modifierId], references: [id])
+
+  isDefault  Boolean  @default(false)
+
+  createdAt  DateTime @default(now())
+
+  @@unique([productId, modifierId])
+  @@index([productId])
+  @@index([modifierId])
+  @@map("product_modifiers")
 }
 
 // ============================================
@@ -203,6 +343,8 @@ model Order {
   tip          Decimal     @db.Decimal(10, 2) @default(0)
   total        Decimal     @db.Decimal(10, 2)
 
+  items        OrderItem[]
+
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   completedAt  DateTime?
@@ -211,6 +353,45 @@ model Order {
   @@index([orderNumber])
   @@index([createdAt])
   @@map("orders")
+}
+
+model OrderItem {
+  id          String   @id @default(uuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  subtotal    Decimal  @db.Decimal(10, 2)
+
+  specialInstructions String?
+
+  modifiers   OrderItemModifier[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model OrderItemModifier {
+  id          String    @id @default(uuid())
+  orderItemId String
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  modifierId  String
+  name        String    // Snapshot of modifier name at time of order
+  price       Decimal   @db.Decimal(10, 2)
+
+  createdAt   DateTime  @default(now())
+
+  @@index([orderItemId])
+  @@map("order_item_modifiers")
 }
 
 // ============================================
