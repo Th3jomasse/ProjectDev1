@@ -59,4 +59,14 @@ export class AuthController {
   async logout(@Request() req: any) {
     return this.authService.logout(req.user.id);
   }
+
+  @Get('health')
+  @ApiOperation({ summary: 'Health check endpoint' })
+  @ApiResponse({ status: 200, description: 'Service is healthy' })
+  healthCheck(): { status: string; service: string } {
+    return {
+      status: 'healthy',
+      service: 'auth-service',
+    };
+  }
 }
